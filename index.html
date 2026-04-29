@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Gap King | MLB Tracker</title>
+<title>Gap King | MLB Live</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -11,7 +11,6 @@
   --bg:#f0f2f7;--surface:#fff;--border:#dde1ec;--text:#0f1120;--sub:#5a6180;--muted:#9096b0;--dim:#e8eaf4;
   --green:#00a85a;--gl:#e6f7ef;--gb:#7dd4aa;
   --red:#e8203a;--rl:#fef0f2;--rb:#f5aab5;
-  --amber:#d97706;--al:#fef7e8;--ab:#f5d588;
   --blue:#2563eb;--sans:'Inter',sans-serif;--mono:'JetBrains Mono',monospace
 }
 html,body{height:100%;overflow:hidden}
@@ -21,14 +20,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text)}
 
 /* HEADER */
 .hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 18px 12px;flex-shrink:0}
-.hdr-top{display:flex;align-items:baseline;gap:8px;margin-bottom:2px}
+.hdr-top{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;justify-content: space-between;}
 .hdr-name{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.03em}
-.hdr-sub{font-size:12px;color:var(--muted)}
-
-/* STATUS TAGS */
-.status-tag {padding:4px 8px;border-radius:6px;font-size:10px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase}
-.hitting {background:var(--gl);color:var(--green);border:1px solid var(--gb)}
-.pitching {background:var(--rl);color:var(--red);border:1px solid var(--rb)}
 
 /* WATCH SCREEN */
 .watch-body{flex:1;overflow-y:auto;padding:15px}
@@ -48,18 +41,20 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text)}
 .city-card.state-live{border-color:var(--gb);background:linear-gradient(135deg,var(--gl) 0%,#fff 60%)}
 .city-card.state-live::before{content:'';position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--green);animation:gpulse 1.4s infinite}
 @keyframes gpulse{0%,100%{box-shadow:0 0 0 0 rgba(0,168,90,.5)}70%{box-shadow:0 0 0 6px rgba(0,168,90,0)}}
+
+.btn-sync{background:var(--blue);color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;}
 </style>
 </head>
 <body>
 
 <div class="screen active" id="screen-pick">
   <div class="hdr">
-    <div class="hdr-top"><span>👑</span><div class="hdr-name">Gap King</div></div>
-    <div class="hdr-sub">Live 8% Gap Tracker (1s Scan)</div>
+    <div class="hdr-top"><div class="hdr-name">👑 Gap King</div></div>
+    <div style="font-size:12px; color:var(--muted)">Tap a live game to start 1s tracking</div>
   </div>
   <div class="city-scroll">
     <div class="city-grid" id="city-grid">
-      <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">Checking schedule...</div>
+      <div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)">Syncing with MLB...</div>
     </div>
   </div>
 </div>
@@ -67,37 +62,38 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text)}
 <div class="screen" id="screen-watch">
   <div class="hdr" style="display:flex; justify-content: space-between; align-items: center;">
     <button onclick="goBack()" style="background:none; border:none; color:var(--blue); font-weight:700; cursor:pointer;">‹ Back</button>
-    <div id="w-team-name" style="font-weight:800;">Team Name</div>
-    <div id="team-status" class="status-tag">ANALYZING</div>
+    <div id="w-team-name" style="font-weight:800; font-size:14px;">Team Name</div>
+    <button class="btn-sync" onclick="forceUpdate()">SYNC NOW</button>
   </div>
 
   <div class="watch-body">
     <div class="sig-box idle" id="sig-box">
-      <div id="sig-lbl" style="font-size:11px; font-weight:800; margin-bottom:5px; color:var(--muted)">MONITORING</div>
-      <div id="sig-action" style="font-size:20px; font-weight:800; margin-bottom:8px;">Scanning Gumbo...</div>
-      <div id="sig-why" style="font-size:13px; color:var(--sub); line-height:1.4;">Odds: 1m cycle / Gumbo: 1s cycle.</div>
+      <div id="sig-lbl" style="font-size:10px; font-weight:800; margin-bottom:5px; color:var(--muted); text-transform:uppercase;">Scanning Feed</div>
+      <div id="sig-action" style="font-size:18px; font-weight:800; margin-bottom:8px;">1s MLB Gumbo Active</div>
+      <div id="sig-why" style="font-size:12px; color:var(--sub); line-height:1.4;">Odds refresh every 60s or on hits.</div>
     </div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:15px;">
       <div class="num-card"><div class="nv" id="n-mlb">—</div><div style="font-size:10px; color:var(--muted)">MLB Win%</div></div>
-      <div class="num-card"><div class="nv" id="n-book">—</div><div style="font-size:10px; color:var(--muted)">Book Implied</div></div>
+      <div class="num-card"><div class="nv" id="n-book">—</div><div style="font-size:10px; color:var(--muted)">Book Prob</div></div>
       <div class="num-card"><div class="nv" id="n-gap">—</div><div style="font-size:10px; color:var(--muted)">Gap (8%)</div></div>
     </div>
 
     <div style="background:var(--surface); border-radius:12px; padding:15px; border:1px solid var(--border);">
        <div style="margin-bottom:15px;">
-          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;"><span>MLB Truth (1s)</span><span id="p-mlb">0%</span></div>
-          <div style="height:8px; background:var(--dim); border-radius:4px;"><div id="b-mlb" class="gap-fill" style="width:0%"></div></div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;"><span>MLB Reality (1s)</span><span id="p-mlb">0%</span></div>
+          <div style="height:6px; background:var(--dim); border-radius:4px;"><div id="b-mlb" class="gap-fill" style="width:0%"></div></div>
        </div>
        <div>
-          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;"><span>Book Implied (1m)</span><span id="p-book">0%</span></div>
-          <div style="height:8px; background:var(--dim); border-radius:4px;"><div id="b-book" class="gap-fill" style="width:0%; background:var(--muted)"></div></div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:5px;"><span>Book Implied (1m)</span><span id="p-book">0%</span></div>
+          <div style="height:6px; background:var(--dim); border-radius:4px;"><div id="b-book" class="gap-fill" style="width:0%; background:var(--muted)"></div></div>
        </div>
     </div>
   </div>
 </div>
 
 <script>
+// ── CONFIG ────────────────────────────────────────────────
 const ODDS_KEY = '75fbd1947a7dec109b7573b6951a65aa';
 const THRESH = 8.0;
 
@@ -108,13 +104,24 @@ let lastOddsPrice = 0;
 let gumboTimer = null;
 let oddsTimer = null;
 
+// ── PROXY HELPER ──
+// Uses corsproxy.io to bypass GitHub's security block
+async function pfetch(url) {
+  try {
+    const proxied = `https://api.corsproxy.io/?url=${encodeURIComponent(url)}`;
+    return await fetch(proxied);
+  } catch(e) {
+    return await fetch(url);
+  }
+}
+
 function calculateImpliedProb(odds) {
   if (!odds) return 0;
   return odds > 0 ? (100 / (odds + 100)) * 100 : (Math.abs(odds) / (Math.abs(odds) + 100)) * 100;
 }
 
 async function fetchSchedule() {
-  const r = await fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1');
+  const r = await pfetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1');
   const d = await r.json();
   const games = d.dates[0]?.games || [];
   const grid = document.getElementById('city-grid');
@@ -136,14 +143,19 @@ async function startWatching(game) {
   document.getElementById('screen-pick').classList.remove('active');
   document.getElementById('screen-watch').classList.add('active');
   
-  updateOdds(); 
+  forceUpdate(); 
   gumboTimer = setInterval(updateGumbo, 1000); 
   oddsTimer = setInterval(updateOdds, 60000); 
 }
 
+function forceUpdate() {
+    updateOdds();
+    updateGumbo();
+}
+
 async function updateGumbo() {
   try {
-    const r = await fetch(`https://statsapi.mlb.com/api/v1.1/game/${selectedGamePk}/feed/live?t=${Date.now()}`);
+    const r = await pfetch(`https://statsapi.mlb.com/api/v1.1/game/${selectedGamePk}/feed/live`);
     const d = await r.json();
     const currentPlay = d.liveData.plays.currentPlay;
     const homeWinProb = currentPlay?.about?.homeWinProbability || 50;
@@ -152,11 +164,6 @@ async function updateGumbo() {
       lastPlayIndex = currentPlay?.about?.atBatIndex;
       updateOdds(); 
     }
-
-    const statusEl = document.getElementById('team-status');
-    const isTop = currentPlay?.about?.isTopInning;
-    statusEl.textContent = isTop ? 'PITCHING' : 'HITTING';
-    statusEl.className = `status-tag ${isTop ? 'pitching' : 'hitting'}`;
 
     const bookProb = calculateImpliedProb(lastOddsPrice);
     const gap = homeWinProb - bookProb;
@@ -172,34 +179,32 @@ async function updateGumbo() {
     const sigBox = document.getElementById('sig-box');
     if (gap >= THRESH) {
       sigBox.className = 'sig-box buy';
-      document.getElementById('sig-lbl').textContent = '🚨 BUY SIGNAL';
+      document.getElementById('sig-lbl').textContent = '🚨 GAP DETECTED';
       document.getElementById('sig-action').textContent = `BET ${selectedTeamName}`;
     } else {
       sigBox.className = 'sig-box idle';
-      document.getElementById('sig-lbl').textContent = 'MONITORING';
+      document.getElementById('sig-lbl').textContent = 'SCANNING FEED';
       document.getElementById('sig-action').textContent = '1s Gumbo Scan Active';
     }
-  } catch (e) { console.error(e); }
+  } catch (e) {}
 }
 
 async function updateOdds() {
   try {
-    const targetUrl = `https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey=${ODDS_KEY}&regions=us&markets=h2h`;
-    const proxiedUrl = `https://api.corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-    
-    const r = await fetch(proxiedUrl);
+    const r = await pfetch(`https://api.the-odds-api.com/v4/sports/baseball_mlb/odds/?apiKey=${ODDS_KEY}&regions=us&markets=h2h`);
     const d = await r.json();
     const game = d.find(o => o.home_team === selectedTeamName || o.away_team === selectedTeamName);
     if (game) {
       lastOddsPrice = game.bookmakers[0]?.outcomes.find(out => out.name === selectedTeamName)?.price || 100;
     }
-  } catch (e) { console.error(e); }
+  } catch (e) {}
 }
 
 function goBack() {
   clearInterval(gumboTimer); clearInterval(oddsTimer);
   document.getElementById('screen-watch').classList.remove('active');
   document.getElementById('screen-pick').classList.add('active');
+  fetchSchedule();
 }
 
 fetchSchedule();
