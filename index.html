@@ -75,7 +75,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text)}
     <div class="sig-box idle" id="sig-box">
       <div id="sig-lbl" style="font-size:11px; font-weight:800; margin-bottom:5px; color:var(--muted)">MONITORING</div>
       <div id="sig-action" style="font-size:20px; font-weight:800; margin-bottom:8px;">1s Gumbo Scan Active</div>
-      <div id="sig-why" style="font-size:13px; color:var(--sub); line-height:1.4;">Odds refresh every 10m or on hits.</div>
+      <div id="sig-why" style="font-size:13px; color:var(--sub); line-height:1.4;">Odds refresh every 60s or on hits.</div>
     </div>
 
     <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:15px;">
@@ -90,7 +90,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text)}
           <div style="height:8px; background:var(--dim); border-radius:4px;"><div id="b-mlb" class="gap-fill" style="width:0%"></div></div>
        </div>
        <div>
-          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;"><span>Hard Rock Implied</span><span id="p-book">0%</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;"><span>Hard Rock Implied (1m)</span><span id="p-book">0%</span></div>
           <div style="height:8px; background:var(--dim); border-radius:4px;"><div id="b-book" class="gap-fill" style="width:0%; background:var(--muted)"></div></div>
        </div>
     </div>
@@ -138,7 +138,7 @@ async function startWatching(game) {
   
   updateOdds(); // Initial load
   gumboTimer = setInterval(updateGumbo, 1000); // 1s MLB Gumbo
-  oddsTimer = setInterval(updateOdds, 600000); // 10m Odds
+  oddsTimer = setInterval(updateOdds, 60000); // 1m Odds
 }
 
 async function updateGumbo() {
@@ -148,7 +148,7 @@ async function updateGumbo() {
     const currentPlay = d.liveData.plays.currentPlay;
     const homeWinProb = currentPlay?.about?.homeWinProbability || 50;
 
-    // Check for Hit/Event-driven Odds Update
+    // EVENT-DRIVEN: Refresh odds immediately if the play index changes (a hit/out occurred)
     if (currentPlay?.about?.atBatIndex !== lastPlayIndex) {
       lastPlayIndex = currentPlay?.about?.atBatIndex;
       updateOdds(); 
